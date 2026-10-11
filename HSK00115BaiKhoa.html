@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BÀI 15 - BÀI KHÓA</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:Arial,"Microsoft YaHei",sans-serif;
+  background:linear-gradient(135deg,#eef4ff,#f9fbff);
+  display:flex; justify-content:center; color:#202124;
+}
+.app{width:min(900px,96vw); padding:20px 0 30px}
+h1{text-align:center;margin:0 0 6px;font-size:32px}
+.subtitle{text-align:center;color:#666;margin-bottom:14px;font-size:18px}
+.progress{text-align:center;font-size:18px;color:#666;margin-bottom:12px}
+.card-wrap{perspective:1200px; cursor:pointer}
+.card{
+  width:100%; height:750px; position:relative; transform-style:preserve-3d;
+  transition:transform .55s ease;
+}
+.card.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  border-radius:24px; background:white; box-shadow:0 12px 35px rgba(30,60,100,.15);
+  display:flex; flex-direction:column; justify-content:space-between;
+  padding:32px 36px; border:1px solid #e6eaf0; overflow:hidden;
+}
+.back{transform:rotateY(180deg)}
+
+.card-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.context-title {
+  font-weight: bold;
+  margin-bottom: 20px;
+  font-size: 22px;
+  color: #2c3e50;
+  line-height: 1.5;
+  border-bottom: 2px solid #edf2f7;
+  padding-bottom: 12px;
+}
+.dialogue-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.dialogue-table td {
+  vertical-align: top;
+  padding: 10px 0;
+}
+.speaker-col {
+  width: 140px;
+  color: #000000;
+  font-weight: bold;
+  font-size: 24px;
+  white-space: nowrap;
+}
+.speaker-col-front {
+  width: 140px;
+  color: #718096;
+  font-weight: bold;
+  font-size: 40.5px;
+  white-space: nowrap;
+}
+.speech-col {
+  color: #e53e3e;
+  font-weight: bold;
+  font-size: 40.5px;
+  line-height: 1.5;
+}
+.speech-col-back {
+  color: #e53e3e;
+  font-weight: bold;
+  font-size: 27px;
+  line-height: 1.5;
+}
+.pinyin-block {
+  color: #718096;
+  font-weight: bold;
+  font-size: 22px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  display: block;
+}
+.meaning-text {
+  font-size: 21px;
+  color: #4b5563;
+  font-weight: normal;
+  margin-top: 4px;
+}
+
+.audio-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  vertical-align: middle;
+}
+.audio-btn:hover {
+  background-color: #edf2f7;
+}
+
+.hint{color:#888; font-size:18px; text-align:center; margin-top:14px}
+.controls{display:flex;gap:16px;justify-content:center;margin-top:22px}
+button{
+  border:0;border-radius:14px;padding:16px 26px;font-size:20px;
+  cursor:pointer;background:#e9eef7;color:#233044;
+}
+button.primary{background:#2563eb;color:white}
+button:hover{filter:brightness(.97)}
+.extra{display:flex;justify-content:center;gap:10px;margin-top:14px}
+.shuffle{background:#e9f8ef}
+
+@media(max-width:600px){
+ .app{padding-top:16px}.card{height:780px}
+ .face{padding:22px 20px}
+ .context-title{font-size:18px; margin-bottom:14px}
+ .speaker-col{width:100px; font-size:18px}
+ .speaker-col-front{width:100px; font-size:30px}
+ .speech-col{font-size:30px}
+ .speech-col-back{font-size:20px}
+ .pinyin-block{font-size:17px;}
+ .meaning-text{font-size:16px}
+ .controls button{padding:12px 16px; font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🇨🇳 BÀI 15 - BÀI KHÓA</h1>
+
+  <div class="progress" id="progress"></div>
+
+  <div class="card-wrap" id="cardWrap" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="face front">
+        <div class="card-content" id="frontContent"></div>
+      </div>
+      <div class="face back">
+        <div class="card-content" id="backContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="event.stopPropagation();prevCard()">← Trước</button>
+    <button class="primary" onclick="event.stopPropagation();flipCard()">Lật thẻ</button>
+    <button onclick="event.stopPropagation();nextCard()">Tiếp →</button>
+  </div>
+  <div class="extra">
+    <button class="shuffle" onclick="event.stopPropagation();shuffleCards()">🔀 Trộn thẻ</button>
+  </div>
+</div>
+
+<script>
+const originalCards = [
+  {
+    "frontContext": "BÀI KHÓA 1: Tại nhà Lý Văn (Lǐ Wén), Lý Văn mời Trần Thiên Trung (Chén Tiānzhōng), Bạch Gia Nguyệt (Bái Jiāyuè) và các bạn bè cùng thưởng thức món ăn Trung Quốc.",
+    "frontLines": [
+      { "speaker": "李文:", "speech": "你们爱吃哪个菜？" },
+      { "speaker": "白家月:", "speech": "我喜欢这个，也喜欢那个。" },
+      { "speaker": "陈天中:", "speech": "这些菜都好吃，还很好看。" },
+      { "speaker": "李文:", "speech": "我爱吃中国菜，也喜欢做。大家多吃点儿。" }
+    ],
+    "backLines": [
+      { "speaker": "李文:", "speech": "你们爱吃哪个菜？", "pinyin": "Nǐmen ài chī nǎge cài?", "meaning": "Các bạn thích ăn món nào?" },
+      { "speaker": "白家月:", "speech": "我喜欢这个，也喜欢那个。", "pinyin": "Wǒ xǐhuan zhège, yě xǐhuan nàge.", "meaning": "Tôi thích món này, cũng thích món kia." },
+      { "speaker": "陈天中:", "speech": "这些菜都好吃，还很好看。", "pinyin": "Zhèxiē cài dōu hǎochī, hái hěn hǎokàn.", "meaning": "Những món này đều ngon, còn rất đẹp mắt nữa." },
+      { "speaker": "李文:", "speech": "我爱吃中国菜，也喜欢做。大家多吃点儿。", "pinyin": "Wǒ ài chī Zhōngguócài, yě xǐhuan zuò. Dàjiā duō chī diǎnr.", "meaning": "Tôi thích ăn món Trung Quốc, cũng thích nấu nướng. Mọi người ăn thêm chút nữa đi." }
+    ]
+  },
+  {
+    "frontContext": "BÀI KHÓA 2: Tại nhà Lý Văn (Lǐ Wén), mọi người vừa ăn cơm vừa bàn về kế hoạch kì nghỉ.",
+    "frontLines": [
+      { "speaker": "李文:", "speech": "你们想去哪儿？" },
+      { "speaker": "安妮:", "speech": "去年我和男朋友去了西安，今年我想去北京。" },
+      { "speaker": "白家月:", "speech": "前几年我去了西安，非常好玩儿。今年我也想去北京。" },
+      { "speaker": "李文:", "speech": "我和王老师都是北京人，北京非常漂亮。" }
+    ],
+    "backLines": [
+      { "speaker": "李文:", "speech": "你们想去哪儿？", "pinyin": "Nǐmen dōu xiǎng qù nǎr?", "meaning": "Các bạn đều muốn đi đâu?" },
+      { "speaker": "安妮:", "speech": "去年我和男朋友去了西安，今年我想去北京。", "pinyin": "Qùnián wǒ hé nánpéngyou qùle Xī'ān, jīnnián wǒ xiǎng qù Běijīng.", "meaning": "Năm ngoái tôi và bạn trai đã đi Tây An, năm nay tôi muốn đi Bắc Kinh." },
+      { "speaker": "白家月:", "speech": "前几年我去了西安，非常好玩儿。今年我也想去北京。", "pinyin": "Qián jǐ nián wǒ qùle Xī'ān, fēicháng hǎowánr. Jīnnián wǒ yě xiǎng qù Běijīng.", "meaning": "Mấy năm trước tôi đã đi Tây An, rất thú vị. Năm nay tôi cũng muốn đi Bắc Kinh." },
+      { "speaker": "李文:", "speech": "我和王老师都是北京人，北京非常漂亮。", "pinyin": "Wǒ hé Wáng lǎoshī dōu shì Běijīng rén. Běijīng fēicháng piàoliang.", "meaning": "Tôi và cô Vương đều là người Bắc Kinh, Bắc Kinh rất đẹp." }
+    ]
+  },
+  {
+    "frontContext": "BÀI KHÓA 3: Ngoài lớp học, Bạch Gia Nguyệt (Bái Jiāyuè), Annie và cô Vương đang bàn về chuyến du lịch Bắc Kinh.",
+    "frontLines": [
+      { "speaker": "王一飞:", "speech": "你们的飞机到北京要几个小时？" },
+      { "speaker": "白家月:", "speech": "九个小时。" },
+      { "speaker": "王一飞:", "speech": "我家人都在北京，星期天我姐姐也有时间，她可以去机场接你们，你们也可以住我家。" },
+      { "speaker": "安妮:", "speech": "我们星期日早上八点到大兴机场，早不早？" },
+      { "speaker": "王一飞:", "speech": "不早。" },
+      { "speaker": "白家月:", "speech": "谢谢老师！那我和您姐姐在大兴机场见！" }
+    ],
+    "backLines": [
+      { "speaker": "王一飞:", "speech": "你们的飞机到北京要几个小时？", "pinyin": "Nǐmen de fēijī dào Běijīng yào jǐ gè xiǎoshí?", "meaning": "Máy bay của các em đến Bắc Kinh mất mấy tiếng?" },
+      { "speaker": "白家月:", "speech": "九个小时。", "pinyin": "Jiǔ gè xiǎoshí.", "meaning": "Chín tiếng." },
+      { "speaker": "王一飞:", "speech": "我家人都在北京，星期天我姐姐也有时间，她可以去机场接你们，你们也可以住我家。", "pinyin": "Wǒ jiārén dōu zài Běijīng, Xīngqītiān wǒ jiějie yě yǒu shíjiān, tā kěyǐ qù jīchǎng jiē nǐmen, nǐmen yě kěyǐ zhù wǒ jiā.", "meaning": "Người nhà tôi đều ở Bắc Kinh, chủ nhật chị gái tôi cũng có thời gian, chị ấy có thể đến sân bay đón các em, các em cũng có thể ở nhà tôi." },
+      { "speaker": "安妮:", "speech": "我们星期日早上八点到大兴机场，早不早？", "pinyin": "Wǒmen Xīngqīrì zǎoshang bā diǎn dào Dàxīng Jīchǎng, zǎo bu zǎo?", "meaning": "Chúng em đến sân bay Đại Hưng lúc 8 giờ sáng chủ nhật, có sớm quá không ạ?" },
+      { "speaker": "王一飞:", "speech": "不早。", "pinyin": "Bù zǎo.", "meaning": "Không sớm đâu." },
+      { "speaker": "白家月:", "speech": "谢谢老师！那我和您姐姐在大兴机场见！", "pinyin": "Xièxie lǎoshī! Nà wǒmen hé nín jiějie zài Dàxīng Jīchǎng jiàn!", "meaning": "Cảm ơn cô! Vậy em và chị gái cô sẽ gặp nhau ở sân bay Đại Hưng ạ!" }
+    ]
+  }
+];
+
+let cards = [...originalCards];
+let index = 0;
+let flipped = false;
+
+function speakText(event, text) {
+  event.stopPropagation();
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  } else {
+    alert('Trình duyệt của bạn không hỗ trợ tính năng phát âm.');
+  }
+}
+
+function render(){
+  const c = cards[index];
+  
+  let frontHtml = `<div class="context-title">${c.frontContext}</div><table class="dialogue-table">`;
+  c.frontLines.forEach(line => {
+    frontHtml += `
+      <tr>
+        <td class="speaker-col-front">${line.speaker}</td>
+        <td class="speech-col">
+          ${line.speech}
+          <button class="audio-btn" onclick="speakText(event, '${line.speech.replace(/'/g, "\\'")}')" title="Nghe phát âm">🔊</button>
+        </td>
+      </tr>`;
+  });
+  frontHtml += `</table>`;
+  document.getElementById('frontContent').innerHTML = frontHtml;
+
+  let backHtml = `<div class="context-title">${c.frontContext}</div><table class="dialogue-table">`;
+  c.backLines.forEach(line => {
+    backHtml += `
+      <tr>
+        <td class="speaker-col">${line.speaker}</td>
+        <td class="speech-col-back">
+          ${line.speech}
+          <button class="audio-btn" onclick="speakText(event, '${line.speech.replace(/'/g, "\\'")}')" title="Nghe phát âm">🔊</button>
+          <div class="pinyin-block">${line.pinyin}</div>
+          <div class="meaning-text">${line.meaning}</div>
+        </td>
+      </tr>`;
+  });
+  backHtml += `</table>`;
+  document.getElementById('backContent').innerHTML = backHtml;
+
+  document.getElementById('progress').textContent = `Thẻ ${index+1} / ${cards.length}`;
+  document.getElementById('card').classList.toggle('flipped', flipped);
+}
+
+function flipCard(){
+  flipped = !flipped;
+  document.getElementById('card').classList.toggle('flipped', flipped);
+}
+
+function nextCard(){
+  index = (index + 1) % cards.length;
+  flipped = false; render();
+}
+
+function prevCard(){
+  index = (index - 1 + cards.length) % cards.length;
+  flipped = false; render();
+}
+
+function shuffleCards(){
+  for(let i=cards.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [cards[i],cards[j]]=[cards[j],cards[i]];
+  }
+  index=0; flipped=false; render();
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight') nextCard();
+  else if(e.key==='ArrowLeft') prevCard();
+  else if(e.key===' ' || e.key==='Enter'){
+    e.preventDefault();
+    flipCard();
+  }
+});
+
+render();
+</script>
+</body>
+</html>

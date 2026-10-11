@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BÀI 15 – NGỮ PHÁP - Flashcard</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:Arial,"Microsoft YaHei",sans-serif;
+  background:#fdfbf7;
+  display:flex; justify-content:center; color:#202124;
+}
+.app{width:min(860px,96vw); padding:30px 0 40px}
+h1{text-align:center;margin:0 0 15px;font-size:32px; font-weight: bold;}
+.progress{text-align:center;font-size:18px;color:#444;margin-bottom:20px; font-weight: bold;}
+.card-wrap{perspective:1200px; cursor:pointer}
+.card{
+  width:100%; height:592px; position:relative; transform-style:preserve-3d;
+  transition:transform .55s ease;
+}
+.card.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  border-radius:24px; background:white; box-shadow:0 15px 45px rgba(0,0,0,.15);
+  display:flex; flex-direction:column; padding:36px; border:3px solid #eee; 
+  overflow-y: auto;
+}
+.front{justify-content:flex-start; align-items:flex-start; text-align:left}
+.back{transform:rotateY(180deg); text-align:left; align-items:flex-start; justify-content:flex-start; padding-top:40px;}
+
+.hl-blue { color: #ffffff; font-weight: bold; background-color: #2563eb; padding: 2px 6px; border-radius: 4px; }
+.zh-back { color: #2563eb; font-weight: bold; font-size: 1.62em; line-height: 1.2; display: inline-block; margin-top: 12px; margin-bottom: 2px; }
+.pinyin-back { color: #666666; font-weight: bold; font-size: 1.2em; display: block; margin: 2px 0; }
+.vi-back { font-size: 1.14em; color: #333; display: block; margin-bottom: 12px; line-height: 1.35; }
+
+.desc-front { font-size: 1.26em; color: #333; margin: 6px 0; text-align: left; width: 100%; line-height: 1.45; }
+.desc{font-size: 1.26em; color: #333; margin: 0; text-align: left; width: 100%; line-height: 1.35; }
+
+.controls{display:flex;gap:20px;justify-content:center;margin-top:30px}
+button{
+  border:0;border-radius:20px;padding:20px 35px;font-size:22px;
+  cursor:pointer;background:#e9eef7;color:#233044; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,.1);
+}
+button.primary{background:#2563eb;color:white}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <h1 id="title">BÀI 15 – NGỮ PHÁP</h1>
+  <div class="progress" id="progress"></div>
+
+  <div class="card-wrap" id="cardWrap" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="face front" id="frontFace"></div>
+      <div class="face back" id="backFace"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="event.stopPropagation();prevCard()" style="display:none;">← TRƯỚC</button>
+    <button class="primary" onclick="event.stopPropagation();flipCard()">LẬT THẺ</button>
+    <button onclick="event.stopPropagation();nextCard()" style="display:none;">TIẾP →</button>
+  </div>
+</div>
+
+<script>
+const cards = [
+  {
+    f: "<div style='text-align:center; width:100%; font-size:1.68em; font-weight:bold; margin-bottom:4px;'>CÒN / CŨNG (<span style='color:#dc2626;'>还 / 也</span>)</div>" +
+       "<div style='text-align:center; font-size:1.5em; color:#dc2626; font-weight:bold; margin-bottom:8px;'>还 / 也 …</div>" +
+       "<div class='desc-front'>" +
+       "<b>Quy tắc chung:</b> Khi nói về hai hành động, hai sở thích, hoặc hai đặc điểm của cùng một người/ vật, có thể nối hai vế câu bằng <span class='hl-blue'>还</span> (còn, mà còn) hoặc <span class='hl-blue'>也</span> (cũng).<br><br>" +
+       "• <b>Cách dùng 也:</b> Dùng khi vế sau giống với vế trước về một phương diện nào đó (thường là cùng chủ ngữ, cùng loại hành động/sở thích).<br><br>" +
+       "• <b>Cách dùng 还:</b> Dùng khi vế sau bổ sung thêm một ý mới, thường mang nghĩa không những… mà còn…." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.35;'>" +
+       "<span class='zh-back'>我喜欢这个，也喜欢那个。</span>" +
+       "<span class='pinyin-back'>Wǒ xǐhuan zhège, yě xǐhuan nàge.</span>" +
+       "<span class='vi-back'>Tôi thích cái này, cũng thích cái kia.<br>(Cùng chủ ngữ 我, cùng động từ 喜欢).</span>" +
+       "<span class='zh-back'>王老师是北京人，李文也是北京人。</span>" +
+       "<span class='pinyin-back'>Wáng lǎoshī shì Běijīng rén, Lǐ Wén yě shì Běijīng rén.</span>" +
+       "<span class='vi-back'>Cô Vương là người Bắc Kinh, Lý Văn cũng là người Bắc Kinh.</span>" +
+       "<span class='zh-back'>我喜欢喝中国茶，还喜欢吃中国菜。</span>" +
+       "<span class='pinyin-back'>Wǒ xǐhuan hē Zhōngguó chá, hái xǐhuan chī Zhōngguócài.</span>" +
+       "<span class='vi-back'>Tôi thích uống trà Trung Quốc, còn thích ăn món Trung Quốc nữa.</span>" +
+       "<span class='zh-back'>这些菜都好吃，还很好看。</span>" +
+       "<span class='pinyin-back'>Zhèxiē cài dōu hǎochī, hái hěn hǎokàn.</span>" +
+       "<span class='vi-back'>Những món này đều ngon, còn rất đẹp mắt nữa.</span>" +
+       "</div>"
+  }
+];
+
+let idx = 0;
+
+function render() {
+  document.getElementById('frontFace').innerHTML = cards[idx].f;
+  document.getElementById('backFace').innerHTML = cards[idx].b;
+  document.getElementById('progress').innerText = `Thẻ ${idx + 1} / ${cards.length}`;
+}
+
+function flipCard() {
+  document.getElementById('card').classList.toggle('flipped');
+}
+
+function nextCard() {
+  idx = (idx + 1) % cards.length;
+  document.getElementById('card').classList.remove('flipped');
+  render();
+}
+
+function prevCard() {
+  idx = (idx - 1 + cards.length) % cards.length;
+  document.getElementById('card').classList.remove('flipped');
+  render();
+}
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === ' ' || event.key === 'Enter') {
+    flipCard();
+    event.preventDefault();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
